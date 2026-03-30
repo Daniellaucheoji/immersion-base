@@ -5,16 +5,9 @@ import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 
-const experiences = [
-  { name: 'VR Adventures', slug: 'vr-adventures' },
-  { name: 'Interactive Installations', slug: 'interactive-installations' },
-  { name: 'DJ + Sensor Experiences', slug: 'dj-sensor-experiences' },
-  { name: 'Custom Activations', slug: 'custom-activations' },
-  { name: 'Neon Dreams', slug: 'neon-dreams' },
-  { name: 'The Light Maze', slug: 'the-light-maze' },
-];
+type Experience = { name: string; slug: string };
 
-export default function Header() {
+`export default function Header({ experiences = [] }: { experiences: Experience[] }) {`
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [experiencesDropdownOpen, setExperiencesDropdownOpen] = useState(false);
   const [mobileExperiencesOpen, setMobileExperiencesOpen] = useState(false);
