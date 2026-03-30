@@ -13,7 +13,7 @@ export default async function SiteLayout({
   );
   return (
     <>
-      <Header />
+      <Header experiences={experiences} />
       <main>{children}</main>
       <Footer />
     </>
