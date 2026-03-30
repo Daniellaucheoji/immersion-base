@@ -43,8 +43,8 @@ export default function FAQ() {
         <h2 className="text-3xl font-bold text-center mb-4">FAQs</h2>
         <p className="text-center text-gray-600 mb-8">
           Most of the immediate questions you may have will be here. If can&apos;t find what you&apos;re looking pleas reach out to us at{' '}
-          <a href="mailto:questions@immersion.co" className="text-purple-600 hover:underline transition-colors">
-            questions@immersion.co
+          <a href="mailto:questions@enterimmersion.co" className="text-purple-600 hover:underline transition-colors">
+            questions@enterimmersion.co
           </a>
         </p>
 
