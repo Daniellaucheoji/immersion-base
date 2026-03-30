@@ -23,41 +23,41 @@ export default async function Experiences() {
   const experiences = await getExperiences();
 
   return (
-    &lt;div className="min-h-screen py-16 px-6"&gt;
-      &lt;div className="max-w-4xl mx-auto"&gt;
-        &lt;h1 className="text-4xl font-bold text-center mb-4"&gt;Experiences&lt;/h1&gt;
-        &lt;p className="text-center text-gray-600 mb-12"&gt;
+    <div className="min-h-screen py-16 px-6">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-4xl font-bold text-center mb-4">Experiences</h1>
+        <p className="text-center text-gray-600 mb-12">
           Discover our immersive activations and events
-        &lt;/p&gt;
+        </p>
 
-        &lt;div className="grid md:grid-cols-2 gap-8"&gt;
-          {experiences.map((exp: any) =&gt; (
-            &lt;Link
+        <div className="grid md:grid-cols-2 gap-8">
+          {experiences.map((exp: any) => (
+            <Link
               key={exp.slug}
               href={`/experiences/${exp.slug}`}
               className="card-hover border border-gray-200 rounded-lg overflow-hidden cursor-pointer group block"
-            &gt;
-              &lt;div className="bg-gray-200 h-48 flex items-center justify-center overflow-hidden"&gt;
+            >
+              <div className="bg-gray-200 h-48 flex items-center justify-center overflow-hidden">
                 {exp.image ? (
-                  &lt;img
+                  <img
                     src={urlFor(exp.image).width(600).height(400).url()}
                     alt={exp.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  /&gt;
+                  />
                 ) : (
-                  &lt;span className="text-gray-400"&gt;Experience Image&lt;/span&gt;
+                  <span className="text-gray-400">Experience Image</span>
                 )}
-              &lt;/div&gt;
-              &lt;div className="p-6"&gt;
-                &lt;h3 className="font-semibold text-xl mb-2 group-hover:text-purple-600 transition-colors duration-200"&gt;
+              </div>
+              <div className="p-6">
+                <h3 className="font-semibold text-xl mb-2 group-hover:text-purple-600 transition-colors duration-200">
                   {exp.title}
-                &lt;/h3&gt;
-                &lt;p className="text-gray-600"&gt;{exp.description}&lt;/p&gt;
-              &lt;/div&gt;
-            &lt;/Link&gt;
+                </h3>
+                <p className="text-gray-600">{exp.description}</p>
+              </div>
+            </Link>
           ))}
-        &lt;/div&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
+        </div>
+      </div>
+    </div>
   );
 }
