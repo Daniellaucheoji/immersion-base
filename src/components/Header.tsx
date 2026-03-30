@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 
-type Experience = { name: string; slug: string };
+type Experience = { title: string; slug: string };
 
 export default function Header({ experiences = [] }: { experiences: Experience[] }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -89,7 +89,7 @@ export default function Header({ experiences = [] }: { experiences: Experience[]
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors"
                       onClick={() => setExperiencesDropdownOpen(false)}
                     >
-                      {exp.name}
+                      {exp.title}
                     </Link>
                   ))}
                 </div>
@@ -179,7 +179,7 @@ export default function Header({ experiences = [] }: { experiences: Experience[]
                       className="block py-2 px-4 text-sm text-gray-600 hover:text-purple-600 transition-colors"
                       onClick={() => { setMobileMenuOpen(false); setMobileExperiencesOpen(false); }}
                     >
-                      {exp.name}
+                      {exp.title}
                     </Link>
                   ))}
                 </div>
