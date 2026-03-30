@@ -9,7 +9,7 @@ export default async function SiteLayout({
   children: React.ReactNode;
 }) {
   const experiences = await client.fetch(
-  *[_type == "experience"] | order(order asc) { "title": title, "slug": slug.current }
+  `*[_type == "experience"] | order(order asc) { "title": title, "slug": slug.current }`
   );
   return (
     <>
