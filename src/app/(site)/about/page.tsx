@@ -25,7 +25,7 @@ export default function About() {
             <p>
               If you&apos;d like to book our activation reach out to us at{' '}
               <a href="mailto:questions@enterimmersion.co" className="text-purple-600 hover:underline transition-colors">
-                questions@immersion.co
+                questions@enterimmersion.co
               </a>{' '}
               or give us a call at{' '}
               <a href="tel:213-889-8567" className="text-purple-600 hover:underline transition-colors">
