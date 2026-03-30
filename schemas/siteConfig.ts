@@ -172,4 +172,5 @@ export const siteConfig = defineType({
     ],
   })
   
-  export const schemaTypes = [siteConfig, experience]
+  export const schemaTypes = [siteConfig, experience, navItem, socialLink, faqItem, product];
+  
