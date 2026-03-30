@@ -127,7 +127,7 @@ export default function BookUs() {
                 <option value="festival">Festival</option>
                 <option value="brand-launch">Brand Launch</option>
                 <option value="private-party">Private Party</option>
-                <option value="wedding">Wedding</option>
+                <option value="Activation for Kids">Activations for Kids</option>
                 <option value="other">Other</option>
               </select>
             </div>
@@ -206,8 +206,8 @@ export default function BookUs() {
             </a>
           </p>
           <p className="mt-2">Or email us at{' '}
-            <a href="mailto:questions@immersion.co" className="text-purple-600 hover:underline transition-colors">
-              questions@immersion.co
+            <a href="mailto:questions@enterimmersion.co" className="text-purple-600 hover:underline transition-colors">
+              questions@enterimmersion.co
             </a>
           </p>
         </div>
