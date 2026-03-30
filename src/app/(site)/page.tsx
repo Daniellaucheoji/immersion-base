@@ -1,12 +1,43 @@
 import Link from 'next/link';
 import FAQ from '@/components/FAQ';
+import { client } from '@/sanity/lib/client';
+import { urlFor } from '@/sanity/lib/image';
 
-export default function Home() {
+export default async function Home() {
+  // Fetch the site configuration from Sanity
+  const siteConfiguration = await client.fetch(
+    `*[_type == "siteConfig"][0]{
+      heroImage,
+      heroVideoUrl
+    }`
+  );
+
   return (
     <div className="min-h-screen">
-      {/* Hero Section - Placeholder */}
-      <section className="w-full bg-gray-200 h-[60vh] flex items-center justify-center overflow-hidden">
-        <p className="text-gray-500 text-lg">Hero Image / Video</p>
+      {/* Hero Section */}
+      <section className="w-full h-[60vh] flex items-center justify-center overflow-hidden relative">
+        {siteConfiguration?.heroVideoUrl ? (
+          <video
+            className="absolute inset-0 w-full h-full object-cover"
+            src={siteConfiguration.heroVideoUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+          />
+        ) : siteConfiguration?.heroImage ? (
+          <div
+            className="absolute inset-0 w-full h-full bg-center bg-cover"
+            style={{
+              backgroundImage: `url('${urlFor(siteConfiguration.heroImage).url()}')`,
+            }}
+          />
+        ) : (
+          <div className="flex items-center justify-center w-full h-full bg-gray-200">
+            <p className="text-gray-500 text-lg z-10">Hero Image / Video</p>
+          </div>
+        )}
+        {/* Ensure any overlaid hero content goes here & stays above background media */}
       </section>
 
       {/* Calendar Subscribe Section */}
