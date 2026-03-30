@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 
 type Experience = { name: string; slug: string };
 
-`export default function Header({ experiences = [] }: { experiences: Experience[] }) {`
+export default function Header({ experiences = [] }: { experiences: Experience[] }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [experiencesDropdownOpen, setExperiencesDropdownOpen] = useState(false);
   const [mobileExperiencesOpen, setMobileExperiencesOpen] = useState(false);
