@@ -63,16 +63,17 @@ export default function Footer({ siteSettings }: { siteSettings?: SiteSettings }
   const [submitted, setSubmitted] = useState(false);
   const termsUrl = siteSettings?.termsUrl || '/terms';
   const privacyUrl = siteSettings?.privacyPolicyUrl || '/privacy';
-  const socialLinks =
+  const fallbackSocialLinks: SocialLink[] = [
+    { platform: 'twitter', url: 'https://twitter.com' },
+    { platform: 'instagram', url: 'https://instagram.com' },
+    { platform: 'linkedin', url: 'https://linkedin.com' },
+    { platform: 'youtube', url: 'https://youtube.com' },
+    { platform: 'tiktok', url: 'https://tiktok.com/@immersionco' },
+  ];
+  const socialLinks: SocialLink[] =
     siteSettings?.socialLinks && siteSettings.socialLinks.length > 0
       ? siteSettings.socialLinks
-      : [
-          { platform: 'twitter', url: 'https://twitter.com' },
-          { platform: 'instagram', url: 'https://instagram.com' },
-          { platform: 'linkedin', url: 'https://linkedin.com' },
-          { platform: 'youtube', url: 'https://youtube.com' },
-          { platform: 'tiktok', url: 'https://tiktok.com/@immersionco' },
-        ];
+      : fallbackSocialLinks;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
