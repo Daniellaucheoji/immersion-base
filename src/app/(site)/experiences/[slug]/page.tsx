@@ -19,6 +19,7 @@ async function getExperience(slug: string) {
       groupSize,
       price,
       about,
+      ticketUrl,
       image
     }`,
     { slug }
@@ -32,6 +33,11 @@ export default async function ExperienceDetail({
 }) {
   const { slug } = await params;
   const experience = await getExperience(slug);
+  const siteSettings = await client.fetch(
+    `*[_type == "siteSettings"][0]{
+      buyTicketsUrl
+    }`
+  );
 
   if (!experience) {
     notFound();
@@ -98,7 +104,7 @@ export default async function ExperienceDetail({
         )}
 
         <div className="flex flex-col sm:flex-row gap-4">
-          <Link href="/tickets" className="btn-primary bg-purple-600 text-white px-8 py-3 rounded-full text-center font-medium">
+          <Link href={experience.ticketUrl || siteSettings?.buyTicketsUrl || '/tickets'} className="btn-primary bg-purple-600 text-white px-8 py-3 rounded-full text-center font-medium">
             Book Now
           </Link>
           <Link href="/book-us" className="btn-secondary bg-black text-white px-8 py-3 rounded-full text-center font-medium">

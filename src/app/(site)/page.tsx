@@ -4,11 +4,24 @@ import { client } from '@/sanity/lib/client';
 import { urlFor } from '@/sanity/lib/image';
 
 export default async function Home() {
-  // Fetch the site configuration from Sanity
+  // Fetch editable site content from Sanity
   const siteConfiguration = await client.fetch(
-    `*[_type == "siteConfig"][0]{
+    `*[_type == "siteSettings"][0]{
+      announcementBanner,
       heroImage,
-      heroVideoUrl
+      heroVideoUrl,
+      subscribeCalendarText,
+      subscribeCalendarUrl,
+      calendarHeading,
+      calendarSubheading,
+      faqHeading,
+      faqIntroText,
+      questionsEmail,
+      faqItems,
+      stillHaveQuestionsHeading,
+      stillHaveQuestionsText,
+      callUsLabel,
+      phoneNumber
     }`
   );
 
@@ -43,35 +56,42 @@ export default async function Home() {
       {/* Calendar Subscribe Section */}
       <section className="py-16 px-6 text-center">
         <a
-          href="https://luma.com/immersionco?k=c&period=past"
+          href={siteConfiguration?.subscribeCalendarUrl || 'https://luma.com/immersionco?k=c&period=past'}
           target="_blank"
           rel="noopener noreferrer"
           className="btn-primary inline-block bg-purple-600 text-white px-6 py-2.5 rounded-full text-sm font-medium mb-6"
         >
-          Subscribe our calendar
+          {siteConfiguration?.subscribeCalendarText || 'Subscribe our calendar'}
         </a>
         <h2 className="text-3xl md:text-4xl font-light">
-          Be the first to get an Invite to
+          {siteConfiguration?.calendarHeading || 'Be the first to get an Invite to'}
         </h2>
         <p className="text-3xl md:text-4xl text-gray-400 font-light">
-          our events and experiences.
+          {siteConfiguration?.calendarSubheading || 'our events and experiences.'}
         </p>
       </section>
 
       {/* FAQ Section */}
-      <FAQ />
+      <FAQ
+        heading={siteConfiguration?.faqHeading}
+        introText={siteConfiguration?.faqIntroText}
+        contactEmail={siteConfiguration?.questionsEmail}
+        items={siteConfiguration?.faqItems}
+      />
 
       {/* Still Have Questions Section */}
       <section className="py-16 px-6 text-center">
-        <h3 className="text-xl font-semibold mb-2">Still have questions?</h3>
+        <h3 className="text-xl font-semibold mb-2">
+          {siteConfiguration?.stillHaveQuestionsHeading || 'Still have questions?'}
+        </h3>
         <p className="text-gray-600 mb-6">
-          If you&apos;d like immediate assistance. Click the button below to call us.
+          {siteConfiguration?.stillHaveQuestionsText || "If you'd like immediate assistance. Click the button below to call us."}
         </p>
         <Link
-          href="tel:213-889-8567"
+          href={`tel:${siteConfiguration?.phoneNumber || '213-889-8567'}`}
           className="btn-primary inline-block bg-purple-600 text-white px-8 py-3 rounded-full text-sm font-medium"
         >
-          Call Us
+          {siteConfiguration?.callUsLabel || 'Call Us'}
         </Link>
       </section>
     </div>

@@ -7,7 +7,7 @@ interface FAQItem {
   answer: string;
 }
 
-const faqData: FAQItem[] = [
+const defaultFaqData: FAQItem[] = [
   {
     question: 'What exactly is an "immersive experience"?',
     answer: 'Think of it as stepping into a living video game, an interactive art installation, and a social event all in one. You\'re not just watching; you\'re exploring, playing, and influencing the world around you with other guests. It\'s a blend of physical space, digital technology, and storytelling designed for connection.'
@@ -34,17 +34,30 @@ const faqData: FAQItem[] = [
   }
 ];
 
-export default function FAQ() {
+export default function FAQ({
+  heading = 'FAQs',
+  introText,
+  contactEmail = 'questions@enterimmersion.co',
+  items,
+}: {
+  heading?: string;
+  introText?: string;
+  contactEmail?: string;
+  items?: FAQItem[];
+}) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const faqData = items && items.length > 0 ? items : defaultFaqData;
+  const fallbackIntro =
+    "Most of the immediate questions you may have will be here. If can't find what you're looking pleas reach out to us at";
 
   return (
     <section className="py-16 px-6">
       <div className="max-w-2xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-4">FAQs</h2>
+        <h2 className="text-3xl font-bold text-center mb-4">{heading}</h2>
         <p className="text-center text-gray-600 mb-8">
-          Most of the immediate questions you may have will be here. If can&apos;t find what you&apos;re looking pleas reach out to us at{' '}
-          <a href="mailto:questions@enterimmersion.co" className="text-purple-600 hover:underline transition-colors">
-            questions@enterimmersion.co
+          {introText || fallbackIntro}{' '}
+          <a href={`mailto:${contactEmail}`} className="text-purple-600 hover:underline transition-colors">
+            {contactEmail}
           </a>
         </p>
 

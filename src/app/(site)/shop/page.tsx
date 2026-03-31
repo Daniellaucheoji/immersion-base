@@ -1,5 +1,6 @@
 import { client } from '@/sanity/lib/client';
 import { urlFor } from '@/sanity/lib/image';
+import { notFound } from 'next/navigation';
 
 type ShopItem = {
   _id: string;
@@ -22,6 +23,11 @@ async function getShopItems(): Promise<ShopItem[]> {
 }
 
 export default async function Shop() {
+  const siteSettings = await client.fetch(`*[_type == "siteSettings"][0]{ shopEnabled }`);
+  if (siteSettings?.shopEnabled === false) {
+    notFound();
+  }
+
   const items = await getShopItems();
 
   return (

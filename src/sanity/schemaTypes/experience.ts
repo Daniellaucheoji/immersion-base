@@ -52,6 +52,12 @@ export const experience = defineType({
       type: 'text',
     }),
     defineField({
+      name: 'ticketUrl',
+      title: 'Ticket URL',
+      type: 'url',
+      description: 'Direct ticket purchase URL for this experience',
+    }),
+    defineField({
       name: 'included',
       title: "What's Included",
       type: 'array',

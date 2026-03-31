@@ -6,13 +6,29 @@ import { useState, useRef, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 
 type Experience = { title: string; slug: string };
+type SiteSettings = {
+  announcementBanner?: string;
+  shopEnabled?: boolean;
+  bookUsLabel?: string;
+  aboutLabel?: string;
+  shopLabel?: string;
+  buyTicketsLabel?: string;
+  buyTicketsUrl?: string;
+};
 
-export default function Header({ experiences = [] }: { experiences: Experience[] }) {
+export default function Header({
+  experiences = [],
+  siteSettings,
+}: {
+  experiences: Experience[];
+  siteSettings?: SiteSettings;
+}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [experiencesDropdownOpen, setExperiencesDropdownOpen] = useState(false);
   const [mobileExperiencesOpen, setMobileExperiencesOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const showShop = siteSettings?.shopEnabled !== false;
 
   const isActive = (path: string) => pathname === path;
 
@@ -31,7 +47,7 @@ export default function Header({ experiences = [] }: { experiences: Experience[]
     <header className="w-full">
       {/* Announcement Banner */}
       <div className="bg-purple-600 text-white text-center py-2 text-[11px] sm:text-sm whitespace-nowrap">
-        NEW EXPERIENCE IN PARTNERSHIP WITH VWB TICKETS LIVE NOW
+        {siteSettings?.announcementBanner || 'NEW EXPERIENCE IN PARTNERSHIP WITH VWB TICKETS LIVE NOW'}
       </div>
 
       {/* Navigation */}
@@ -99,19 +115,21 @@ export default function Header({ experiences = [] }: { experiences: Experience[]
               href="/book-us"
               className={`nav-link ${isActive('/book-us') ? 'text-purple-600' : 'text-gray-700'}`}
             >
-              Book us
+              {siteSettings?.bookUsLabel || 'Book us'}
             </Link>
-            <Link
-              href="/shop"
-              className={`nav-link ${isActive('/shop') ? 'text-purple-600' : 'text-gray-700'}`}
-            >
-              Shop
-            </Link>
+            {showShop && (
+              <Link
+                href="/shop"
+                className={`nav-link ${isActive('/shop') ? 'text-purple-600' : 'text-gray-700'}`}
+              >
+                {siteSettings?.shopLabel || 'Shop'}
+              </Link>
+            )}
             <Link
               href="/about"
               className={`nav-link ${isActive('/about') ? 'text-purple-600' : 'text-gray-700'}`}
             >
-              About
+              {siteSettings?.aboutLabel || 'About'}
             </Link>
           </div>
         </div>
@@ -119,10 +137,10 @@ export default function Header({ experiences = [] }: { experiences: Experience[]
         {/* CTA Button */}
         <div className="flex items-center gap-4">
           <Link
-            href="/tickets"
+            href={siteSettings?.buyTicketsUrl || '/tickets'}
             className="hidden md:block btn-secondary bg-black text-white px-4 py-2 rounded-full text-sm font-medium"
           >
-            Buy Tickets
+            {siteSettings?.buyTicketsLabel || 'Buy Tickets'}
           </Link>
 
           {/* Mobile Menu Button */}
@@ -188,9 +206,9 @@ export default function Header({ experiences = [] }: { experiences: Experience[]
 
             {/* Other nav items */}
             {[
-              { href: '/book-us', label: 'Book us' },
-              { href: '/shop', label: 'Shop' },
-              { href: '/about', label: 'About' },
+              { href: '/book-us', label: siteSettings?.bookUsLabel || 'Book us' },
+              ...(showShop ? [{ href: '/shop', label: siteSettings?.shopLabel || 'Shop' }] : []),
+              { href: '/about', label: siteSettings?.aboutLabel || 'About' },
             ].map((item) => (
               <Link
                 key={item.href}
@@ -204,11 +222,11 @@ export default function Header({ experiences = [] }: { experiences: Experience[]
               </Link>
             ))}
             <Link
-              href="/tickets"
+              href={siteSettings?.buyTicketsUrl || '/tickets'}
               className="mt-2 btn-secondary bg-black text-white px-4 py-3 rounded-full text-sm font-medium text-center"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Buy Tickets
+              {siteSettings?.buyTicketsLabel || 'Buy Tickets'}
             </Link>
           </div>
         </div>

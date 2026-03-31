@@ -11,11 +11,31 @@ export default async function SiteLayout({
   const experiences = await client.fetch(
   `*[_type == "experience"] | order(order asc) { "title": title, "slug": slug.current }`
   );
+  const siteSettings = await client.fetch(
+    `*[_type == "siteSettings"][0]{
+      announcementBanner,
+      shopEnabled,
+      bookUsLabel,
+      aboutLabel,
+      shopLabel,
+      buyTicketsLabel,
+      buyTicketsUrl,
+      privacyPolicyUrl,
+      termsUrl,
+      footerAboutLabel,
+      footerAboutUrl,
+      footerBookLabel,
+      footerBookUrl,
+      footerPrivacyLabel,
+      footerTermsLabel,
+      socialLinks
+    }`
+  );
   return (
     <>
-      <Header experiences={experiences} />
+      <Header experiences={experiences} siteSettings={siteSettings} />
       <main>{children}</main>
-      <Footer />
+      <Footer siteSettings={siteSettings} />
     </>
   );
 }
