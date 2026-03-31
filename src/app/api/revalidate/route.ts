@@ -15,9 +15,9 @@ export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => ({}))) as WebhookPayload;
   const docType = body._type;
 
-  revalidateTag('sanity');
+  revalidateTag('sanity', 'max');
   if (docType) {
-    revalidateTag(docType);
+    revalidateTag(docType, 'max');
   }
 
   // Revalidate key pages so navigation/footer/content updates appear immediately.
