@@ -15,7 +15,9 @@ async function getExperiences() {
       "slug": slug.current,
       description,
       image
-    }`
+    }`,
+    {},
+    { next: { tags: ['sanity', 'experience'] } }
   );
 }
 

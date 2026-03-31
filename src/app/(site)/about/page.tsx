@@ -14,7 +14,9 @@ export default async function About() {
       aboutBody,
       questionsEmail,
       phoneNumber
-    }`
+    }`,
+    {},
+    { next: { tags: ['sanity', 'siteSettings'] } }
   );
 
   const aboutParagraphs =

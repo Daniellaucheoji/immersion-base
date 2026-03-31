@@ -18,12 +18,18 @@ async function getShopItems(): Promise<ShopItem[]> {
       price,
       description,
       image
-    }`
+    }`,
+    {},
+    { next: { tags: ['sanity', 'shopItem'] } }
   );
 }
 
 export default async function Shop() {
-  const siteSettings = await client.fetch(`*[_type == "siteSettings"][0]{ shopEnabled }`);
+  const siteSettings = await client.fetch(
+    `*[_type == "siteSettings"][0]{ shopEnabled }`,
+    {},
+    { next: { tags: ['sanity', 'siteSettings'] } }
+  );
   if (siteSettings?.shopEnabled === false) {
     notFound();
   }

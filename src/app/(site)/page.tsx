@@ -22,7 +22,9 @@ export default async function Home() {
       stillHaveQuestionsText,
       callUsLabel,
       phoneNumber
-    }`
+    }`,
+    {},
+    { next: { tags: ['sanity', 'siteSettings'] } }
   );
 
   return (

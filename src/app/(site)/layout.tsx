@@ -2,6 +2,8 @@ import { client } from '@/sanity/lib/client';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
+export const revalidate = 3600;
+
 export default async function SiteLayout({
 
   children,
@@ -9,7 +11,9 @@ export default async function SiteLayout({
   children: React.ReactNode;
 }) {
   const experiences = await client.fetch(
-  `*[_type == "experience"] | order(order asc) { "title": title, "slug": slug.current }`
+    `*[_type == "experience"] | order(order asc) { "title": title, "slug": slug.current }`,
+    {},
+    { next: { tags: ['sanity', 'experience'] } }
   );
   const siteSettings = await client.fetch(
     `*[_type == "siteSettings"][0]{
@@ -29,7 +33,9 @@ export default async function SiteLayout({
       footerPrivacyLabel,
       footerTermsLabel,
       socialLinks
-    }`
+    }`,
+    {},
+    { next: { tags: ['sanity', 'siteSettings'] } }
   );
   return (
     <>

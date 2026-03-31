@@ -22,7 +22,8 @@ async function getExperience(slug: string) {
       ticketUrl,
       image
     }`,
-    { slug }
+    { slug },
+    { next: { tags: ['sanity', 'experience'] } }
   );
 }
 
@@ -36,7 +37,9 @@ export default async function ExperienceDetail({
   const siteSettings = await client.fetch(
     `*[_type == "siteSettings"][0]{
       buyTicketsUrl
-    }`
+    }`,
+    {},
+    { next: { tags: ['sanity', 'siteSettings'] } }
   );
 
   if (!experience) {

@@ -6,7 +6,9 @@ export default async function Tickets() {
     `*[_type == "siteSettings"][0]{
       subscribeCalendarText,
       subscribeCalendarUrl
-    }`
+    }`,
+    {},
+    { next: { tags: ['sanity', 'siteSettings'] } }
   );
 
   return (
