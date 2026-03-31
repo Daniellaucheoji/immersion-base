@@ -1,5 +1,5 @@
 import hero from './hero';
-import experience from './experience';
+import { experience } from './experience';
 import shopItem from './shopItem';
 import siteSettings from './siteSettings';
 
