@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Immersion
 
-## Getting Started
+Next.js site for [enterimmersion.com](https://enterimmersion.com), including the guest check-in kiosk for **play.enterimmersion.com** and the queue admin at **/admin**.
 
-First, run the development server:
+## Apps in this repo
+
+| Surface | URL | Purpose |
+| --- | --- | --- |
+| Marketing site | `enterimmersion.com` | Existing Immersion marketing pages (Sanity CMS) |
+| Guest kiosk | `play.enterimmersion.com` (or `/play`) | Minimal check-in → queue number |
+| Admin | `enterimmersion.com/admin` | Registration list + queue status updates |
+
+## Getting started
 
 ```bash
+npm install
+cp .env.example .env.local
+# fill in Neon DATABASE_URL, SMTP, and ADMIN_SESSION_SECRET
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Kiosk (local): [http://localhost:3000/play](http://localhost:3000/play)
+- Admin (local): [http://localhost:3000/admin](http://localhost:3000/admin)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Neon setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Create a Neon project and copy the connection string into `DATABASE_URL`.
+2. Run [`neon/schema.sql`](./neon/schema.sql) in the Neon SQL Editor.
 
-## Learn More
+Registrations are stored in `immersion_kiosk_registrations`. Admin OTP codes are stored in `immersion_admin_otps`. All reads/writes go through Next.js API routes using the Neon serverless driver.
 
-To learn more about Next.js, take a look at the following resources:
+## Guest flow
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Guest sees Immersion logo on the CPad and taps **Check In**.
+2. Enters name, email, phone; selects **VR** or **FIFA**; accepts the health & safety disclaimer.
+3. On submit, a row is inserted and a unique **queue number** is returned.
+4. Acknowledgment email is sent via nodemailer (SMTP).
+5. When staff sets status to **Ready** in admin, a second email goes out: *Your Immersion experience is ready.*
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Admin access
 
-## Deploy on Vercel
+1. Sign in at `/admin` with any **@nodeclub.co** email.
+2. A 6-digit one-time code is emailed via SMTP.
+3. Enter the code to open the guest queue.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Environment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See [`.env.example`](./.env.example):
+
+- `DATABASE_URL` — Neon Postgres connection string
+- `NEXT_PUBLIC_EVENT_NAME` — stored on each registration
+- `ADMIN_SESSION_SECRET` — signs admin session cookies
+- `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `EMAIL_FROM` — nodemailer
+
+## Deploy notes
+
+Point both `enterimmersion.com` and `play.enterimmersion.com` at this Next.js deployment. Middleware rewrites the play hostname root to `/play`.

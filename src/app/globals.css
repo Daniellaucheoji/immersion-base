@@ -5,12 +5,57 @@
   --foreground: #171717;
   --purple: #7c3aed;
   --purple-dark: #6d28d9;
+  --play-bg: #07070a;
+  --play-violet: #7c3aed;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Play kiosk (play.enterimmersion.com) */
+.play-shell {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124, 58, 237, 0.28), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(91, 33, 182, 0.18), transparent 50%),
+    var(--play-bg);
+  color: #f5f5f5;
+}
+
+.play-atmosphere {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+  opacity: 0.5;
+}
+
+.play-input {
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.9rem 1rem;
+  font-size: 1rem;
+  color: #fff;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.play-input::placeholder {
+  color: #737373;
+}
+
+.play-input:focus {
+  border-color: rgba(167, 139, 250, 0.7);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
 }
 
 /* Smooth page transitions */
