@@ -1,9 +1,16 @@
 import nodemailer from "nodemailer";
+import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import type { ImmersionKioskRegistration } from "@/lib/db/types";
 
 const INSTAGRAM_URL = "https://www.instagram.com/landofimmersion/";
 
-type EmailResult = { sent: boolean; skipped?: boolean; error?: string };
+export type EmailResult = {
+  sent: boolean;
+  skipped?: boolean;
+  error?: string;
+  messageId?: string;
+  response?: string;
+};
 
 function escapeHtml(value: string) {
   return value
@@ -13,7 +20,7 @@ function escapeHtml(value: string) {
     .replace(/"/g, "&quot;");
 }
 
-function getTransporter() {
+function getSmtpConfig(): SMTPTransport.Options | null {
   const host = process.env.SMTP_HOST?.trim();
   const port = Number(process.env.SMTP_PORT || 587);
   const user = process.env.SMTP_USER?.trim();
@@ -24,13 +31,27 @@ function getTransporter() {
     return null;
   }
 
-  return nodemailer.createTransport({
+  const secure = port === 465;
+
+  return {
     host,
     port,
-    secure: port === 465,
-    requireTLS: port === 587,
+    secure,
+    requireTLS: !secure,
     auth: { user, pass },
-  });
+    connectionTimeout: 20_000,
+    greetingTimeout: 20_000,
+    socketTimeout: 30_000,
+    tls: {
+      minVersion: "TLSv1.2",
+    },
+  };
+}
+
+function getTransporter() {
+  const config = getSmtpConfig();
+  if (!config) return null;
+  return nodemailer.createTransport(config);
 }
 
 async function sendMail(payload: {
@@ -61,10 +82,43 @@ async function sendMail(payload: {
       subject: payload.subject,
       html: payload.html,
       text: payload.text,
+      headers: {
+        "X-Immersion-Mail": "guest-experience",
+      },
     });
-    console.info("[email] sent:", payload.subject, "→", payload.to, info.messageId);
-    return { sent: true };
+
+    // Important on serverless: close the socket before the function freezes.
+    transporter.close();
+
+    const accepted = (info.accepted || []).map(String);
+    const rejected = (info.rejected || []).map(String);
+
+    if (!accepted.length || rejected.includes(payload.to)) {
+      const message = `SMTP did not accept recipient ${payload.to}. rejected=${rejected.join(",") || "none"} response=${info.response || "n/a"}`;
+      console.error("[email]", message);
+      return { sent: false, error: message, response: info.response };
+    }
+
+    console.info(
+      "[email] sent:",
+      payload.subject,
+      "→",
+      payload.to,
+      info.messageId,
+      info.response
+    );
+
+    return {
+      sent: true,
+      messageId: info.messageId,
+      response: info.response,
+    };
   } catch (err) {
+    try {
+      transporter.close();
+    } catch {
+      // ignore
+    }
     const message = err instanceof Error ? err.message : "Failed to send email";
     console.error("[email] nodemailer error:", message, "→", payload.to);
     return { sent: false, error: message };
@@ -333,6 +387,23 @@ Immersion`,
         label: "Open admin portal",
         href: adminUrl,
       },
+    }),
+  });
+}
+
+export async function sendTestEmail(to: string) {
+  return sendMail({
+    to,
+    subject: "Immersion SMTP test — nodemailer is working",
+    text: "This is a nodemailer SMTP test from Immersion. If you received this, email delivery is working.",
+    html: brandShell({
+      preheader: "Immersion SMTP test",
+      eyebrow: "System check",
+      title: "Email delivery works",
+      bodyHtml: `
+        <p style="margin:0 0 14px;">This is a nodemailer SMTP test from Immersion.</p>
+        <p style="margin:0;">If you received this message, guest emails can be delivered from this environment.</p>
+      `,
     }),
   });
 }

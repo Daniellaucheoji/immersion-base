@@ -61,6 +61,7 @@ export default function AdminPage() {
   const [addingTeam, setAddingTeam] = useState(false);
   const [teamMessage, setTeamMessage] = useState<string | null>(null);
   const [teamError, setTeamError] = useState<string | null>(null);
+  const [testingEmail, setTestingEmail] = useState(false);
 
   const checkAuth = useCallback(async () => {
     const res = await fetch("/api/admin/auth");
@@ -280,6 +281,30 @@ export default function AdminPage() {
     }
   }
 
+  async function handleTestEmail() {
+    setTestingEmail(true);
+    try {
+      const res = await fetch("/api/admin/test-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: session?.email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Test failed");
+      if (data.email?.sent) {
+        alert(`Test email sent to ${data.to}. Check inbox and spam.`);
+      } else if (data.email?.skipped) {
+        alert("SMTP is not configured on the server (missing SMTP env vars).");
+      } else {
+        alert(`Test email failed: ${data.email?.error || "unknown error"}`);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Test failed");
+    } finally {
+      setTestingEmail(false);
+    }
+  }
+
   async function toggleTeamActive(member: TeamMember) {
     try {
       const res = await fetch("/api/team", {
@@ -407,6 +432,14 @@ export default function AdminPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleTestEmail}
+            disabled={testingEmail}
+            className="rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm text-violet-700 hover:bg-violet-100 disabled:opacity-60"
+          >
+            {testingEmail ? "Sending…" : "Test email"}
+          </button>
           <button
             type="button"
             onClick={() => {

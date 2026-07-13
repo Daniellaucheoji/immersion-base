@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import {
   createRegistration,
+  getRegistrationById,
   listRegistrations,
   markAcknowledgmentSent,
 } from "@/lib/db/registrations";
@@ -75,8 +76,11 @@ export async function POST(request: Request) {
       console.error("[registrations POST] acknowledgment email failed", emailResult);
     }
 
+    // Return fresh row so acknowledgment_sent_at is accurate.
+    const fresh = await getRegistrationById(registration.id);
+
     return NextResponse.json({
-      registration,
+      registration: fresh || registration,
       email: emailResult,
     });
   } catch (err) {
