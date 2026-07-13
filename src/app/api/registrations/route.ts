@@ -79,6 +79,37 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error("[registrations POST]", err);
-    return NextResponse.json({ error: "Could not complete registration" }, { status: 500 });
+    const message = err instanceof Error ? err.message : String(err);
+    const lower = message.toLowerCase();
+
+    let hint = "Could not complete registration";
+    if (lower.includes("missing database_url")) {
+      hint =
+        "Server is missing DATABASE_URL. Add your Neon connection string in the hosting environment variables, then redeploy.";
+    } else if (
+      lower.includes("does not exist") ||
+      lower.includes("relation") ||
+      lower.includes("undefined_table") ||
+      lower.includes("undefined_column")
+    ) {
+      hint =
+        "Database schema is incomplete. Run neon/schema.sql in your Neon SQL editor, then try again.";
+    } else if (lower.includes("password authentication failed") || lower.includes("connection")) {
+      hint =
+        "Could not connect to the database. Check DATABASE_URL on the hosting provider.";
+    }
+
+    return NextResponse.json(
+      {
+        error: hint,
+        // Safe short code for debugging without exposing secrets
+        code: lower.includes("missing database_url")
+          ? "MISSING_DATABASE_URL"
+          : lower.includes("does not exist") || lower.includes("undefined_")
+            ? "MISSING_SCHEMA"
+            : "REGISTRATION_FAILED",
+      },
+      { status: 500 }
+    );
   }
 }
