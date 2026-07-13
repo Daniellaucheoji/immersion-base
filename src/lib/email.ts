@@ -224,7 +224,7 @@ export async function sendAcknowledgmentEmail(registration: ImmersionKioskRegist
 
   return sendMail({
     to: registration.email,
-    subject: `Welcome to Immersion — Queue #${registration.queue_number}`,
+    subject: `Welcome to Immersion: Queue #${registration.queue_number}`,
     text: `Hi ${registration.name},
 
 Welcome to Immersion. You're officially checked in for ${registration.event_name}.
@@ -232,7 +232,7 @@ Welcome to Immersion. You're officially checked in for ${registration.event_name
 Your queue number is #${registration.queue_number}
 Experience: ${registration.experience}
 
-Hold onto this email — it's your digital ticket for the night. We'll send another message as soon as your station is ready.
+Hold onto this email. It's your digital ticket for the night. We'll send another message as soon as your station is ready.
 
 See you soon,
 Immersion
@@ -246,7 +246,7 @@ ${INSTAGRAM_URL}`,
         <p style="margin:0 0 14px;">You're officially checked in for <strong style="color:#ffffff;">${eventName}</strong>. We've saved your place and your digital ticket is ready.</p>
         ${queueBadge(registration.queue_number)}
         <p style="margin:0 0 14px;">Tonight's experience: <strong style="color:#ffffff;">${experience}</strong></p>
-        <p style="margin:0;">Sit tight — we'll email you the moment your station is ready for you.</p>
+        <p style="margin:0;">Sit tight. We'll email you the moment your station is ready for you.</p>
       `,
     }),
   });
@@ -258,7 +258,7 @@ export async function sendReadyEmail(registration: ImmersionKioskRegistration) {
 
   return sendMail({
     to: registration.email,
-    subject: "You're up — your Immersion experience is ready",
+    subject: "You're up: your Immersion experience is ready",
     text: `Hi ${registration.name},
 
 You're up. Your ${registration.experience} station is ready.
@@ -278,7 +278,7 @@ ${INSTAGRAM_URL}`,
         <p style="margin:0 0 14px;">Hi ${name},</p>
         <p style="margin:0 0 14px;">You're up. Your <strong style="color:#ffffff;">${experience}</strong> station is ready and waiting for you.</p>
         ${queueBadge(registration.queue_number)}
-        <p style="margin:0;">Please return to Immersion check-in — our team will take it from there.</p>
+        <p style="margin:0;">Please return to Immersion check-in. Our team will take it from there.</p>
       `,
     }),
   });
@@ -298,7 +298,7 @@ Thank you for hanging with us. We hope you loved your ${registration.experience}
 If you want more Immersion moments, follow us on Instagram:
 ${INSTAGRAM_URL}
 
-Stay close — we've got more events and experiences coming soon.
+Stay close. We've got more events and experiences coming soon.
 
 With love,
 Immersion`,
@@ -309,7 +309,7 @@ Immersion`,
       bodyHtml: `
         <p style="margin:0 0 14px;">Hi ${name},</p>
         <p style="margin:0 0 14px;">Thank you for spending time with us tonight. We hope you enjoyed every second of your <strong style="color:#ffffff;">${experience}</strong> experience.</p>
-        <p style="margin:0 0 14px;">Follow us on Instagram to stay in the loop — and keep an eye out for more Immersion events and experiences coming soon.</p>
+        <p style="margin:0 0 14px;">Follow us on Instagram to stay in the loop, and keep an eye out for more Immersion events and experiences coming soon.</p>
       `,
       cta: {
         label: "Follow us on Instagram",
@@ -354,7 +354,7 @@ export async function sendTeamInviteEmail(member: {
 
   return sendMail({
     to: member.email,
-    subject: `You're on the Immersion booth team — ${member.role}`,
+    subject: `You're on the Immersion booth team: ${member.role}`,
     text: `Hi ${member.name},
 
 You've been added to the Immersion booth team.
@@ -381,7 +381,7 @@ Immersion`,
             </td>
           </tr>
         </table>
-        <p style="margin:0;">Sign in to the admin portal with this email — we'll send you a one-time code when you're ready.</p>
+        <p style="margin:0;">Sign in to the admin portal with this email. We'll send you a one-time code when you're ready.</p>
       `,
       cta: {
         label: "Open admin portal",
@@ -394,7 +394,7 @@ Immersion`,
 export async function sendTestEmail(to: string) {
   return sendMail({
     to,
-    subject: "Immersion SMTP test — nodemailer is working",
+    subject: "Immersion SMTP test: nodemailer is working",
     text: "This is a nodemailer SMTP test from Immersion. If you received this, email delivery is working.",
     html: brandShell({
       preheader: "Immersion SMTP test",
