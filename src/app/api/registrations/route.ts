@@ -71,6 +71,8 @@ export async function POST(request: Request) {
     const emailResult = await sendAcknowledgmentEmail(registration);
     if (emailResult.sent) {
       await markAcknowledgmentSent(registration.id);
+    } else {
+      console.error("[registrations POST] acknowledgment email failed", emailResult);
     }
 
     return NextResponse.json({

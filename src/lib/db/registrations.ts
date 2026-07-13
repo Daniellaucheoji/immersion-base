@@ -54,6 +54,8 @@ async function getRegistrationById(id: string) {
   return row ? mapRow(row as Record<string, unknown>) : null;
 }
 
+export { getRegistrationById };
+
 export async function listRegistrations(filters?: {
   eventName?: string | null;
   status?: RegistrationStatus | null;

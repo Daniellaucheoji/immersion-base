@@ -14,10 +14,11 @@ function escapeHtml(value: string) {
 }
 
 function getTransporter() {
-  const host = process.env.SMTP_HOST;
+  const host = process.env.SMTP_HOST?.trim();
   const port = Number(process.env.SMTP_PORT || 587);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const user = process.env.SMTP_USER?.trim();
+  // Gmail app passwords are often copied with spaces — strip them.
+  const pass = process.env.SMTP_PASS?.replace(/\s+/g, "");
 
   if (!host || !user || !pass) {
     return null;
@@ -27,6 +28,7 @@ function getTransporter() {
     host,
     port,
     secure: port === 465,
+    requireTLS: port === 587,
     auth: { user, pass },
   });
 }
@@ -52,17 +54,19 @@ async function sendMail(payload: {
   }
 
   try {
-    await transporter.sendMail({
+    const info = await transporter.sendMail({
       from,
       to: payload.to,
+      replyTo: process.env.SMTP_USER || undefined,
       subject: payload.subject,
       html: payload.html,
       text: payload.text,
     });
+    console.info("[email] sent:", payload.subject, "→", payload.to, info.messageId);
     return { sent: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to send email";
-    console.error("[email] nodemailer error:", message);
+    console.error("[email] nodemailer error:", message, "→", payload.to);
     return { sent: false, error: message };
   }
 }

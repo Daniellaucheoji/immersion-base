@@ -202,8 +202,46 @@ export default function AdminPage() {
       setRegistrations((prev) =>
         prev.map((r) => (r.id === id ? data.registration : r))
       );
+      if (data.email && data.email.sent === false && !data.email.skipped) {
+        alert(`Status updated, but email failed: ${data.email.error || "unknown error"}`);
+      } else if (data.email?.skipped) {
+        alert("Status updated, but SMTP is not configured on the server — email was skipped.");
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  async function resendEmail(
+    id: string,
+    type: "acknowledgment" | "ready" | "thank_you"
+  ) {
+    setUpdatingId(id);
+    try {
+      const res = await fetch(`/api/registrations/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "resend-email", type }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Resend failed");
+      if (data.registration) {
+        setRegistrations((prev) =>
+          prev.map((r) => (r.id === id ? data.registration : r))
+        );
+      }
+      const result = data.email?.[type];
+      if (result?.sent) {
+        alert("Email resent successfully. Ask the guest to check inbox and spam.");
+      } else if (result?.skipped) {
+        alert("SMTP is not configured on the server.");
+      } else {
+        alert(`Email failed: ${result?.error || "unknown error"}`);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Resend failed");
     } finally {
       setUpdatingId(null);
     }
@@ -557,18 +595,19 @@ export default function AdminPage() {
               <th className="px-4 py-3 font-medium">Event</th>
               <th className="px-4 py-3 font-medium">Checked in by</th>
               <th className="px-4 py-3 font-medium">Status</th>
+              <th className="px-4 py-3 font-medium">Emails</th>
             </tr>
           </thead>
           <tbody>
             {loading && filtered.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-10 text-center text-neutral-500">
+                <td colSpan={10} className="px-4 py-10 text-center text-neutral-500">
                   Loading registrations…
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-10 text-center text-neutral-500">
+                <td colSpan={10} className="px-4 py-10 text-center text-neutral-500">
                   No registrations yet.
                 </td>
               </tr>
@@ -620,6 +659,34 @@ export default function AdminPage() {
                           </option>
                         ))}
                       </select>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col gap-1">
+                        <button
+                          type="button"
+                          disabled={updatingId === row.id}
+                          onClick={() => resendEmail(row.id, "acknowledgment")}
+                          className="text-left text-xs text-violet-700 hover:underline disabled:opacity-50"
+                        >
+                          Resend check-in{row.acknowledgment_sent_at ? "" : " (missing)"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={updatingId === row.id}
+                          onClick={() => resendEmail(row.id, "ready")}
+                          className="text-left text-xs text-violet-700 hover:underline disabled:opacity-50"
+                        >
+                          Resend ready{row.ready_email_sent_at ? "" : " (missing)"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={updatingId === row.id}
+                          onClick={() => resendEmail(row.id, "thank_you")}
+                          className="text-left text-xs text-violet-700 hover:underline disabled:opacity-50"
+                        >
+                          Resend thanks{row.thank_you_email_sent_at ? "" : " (missing)"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
