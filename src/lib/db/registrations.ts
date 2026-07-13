@@ -7,6 +7,14 @@ import type {
 } from "@/lib/db/types";
 
 function mapRow(row: Record<string, unknown>): ImmersionKioskRegistration {
+  const eventDateRaw = row.event_date;
+  const eventDate =
+    eventDateRaw == null
+      ? null
+      : eventDateRaw instanceof Date
+        ? eventDateRaw.toISOString().slice(0, 10)
+        : String(eventDateRaw).slice(0, 10);
+
   return {
     id: String(row.id),
     queue_number: Number(row.queue_number),
@@ -15,7 +23,10 @@ function mapRow(row: Record<string, unknown>): ImmersionKioskRegistration {
     phone: String(row.phone ?? ""),
     experience: row.experience as ImmersionKioskRegistration["experience"],
     status: row.status as ImmersionKioskRegistration["status"],
+    event_id: row.event_id ? String(row.event_id) : null,
     event_name: String(row.event_name),
+    location: row.location == null ? null : String(row.location),
+    event_date: eventDate,
     play_count: Number(row.play_count),
     checked_in_by_team_member_id: row.checked_in_by_team_member_id
       ? String(row.checked_in_by_team_member_id)
@@ -120,18 +131,24 @@ export async function createRegistration(input: CreateRegistrationInput) {
 
   const sql = getSql();
   const checkedInBy = input.checked_in_by_team_member_id || null;
+  const eventId = input.event_id || null;
+  const location = input.location || null;
+  const eventDate = input.event_date || null;
 
   const rows = checkedInBy
     ? await sql`
         insert into immersion_kiosk_registrations (
-          name, email, phone, experience, event_name, status,
-          disclaimer_accepted_at, checked_in_by_team_member_id
+          name, email, phone, experience, event_id, event_name, location, event_date,
+          status, disclaimer_accepted_at, checked_in_by_team_member_id
         ) values (
           ${input.name},
           ${input.email.toLowerCase()},
           ${input.phone},
           ${input.experience},
+          ${eventId}::uuid,
           ${input.event_name},
+          ${location},
+          ${eventDate}::date,
           'waiting',
           now(),
           ${checkedInBy}::uuid
@@ -140,14 +157,17 @@ export async function createRegistration(input: CreateRegistrationInput) {
       `
     : await sql`
         insert into immersion_kiosk_registrations (
-          name, email, phone, experience, event_name, status,
-          disclaimer_accepted_at
+          name, email, phone, experience, event_id, event_name, location, event_date,
+          status, disclaimer_accepted_at
         ) values (
           ${input.name},
           ${input.email.toLowerCase()},
           ${input.phone},
           ${input.experience},
+          ${eventId}::uuid,
           ${input.event_name},
+          ${location},
+          ${eventDate}::date,
           'waiting',
           now()
         )

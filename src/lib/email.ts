@@ -1,8 +1,10 @@
 import nodemailer from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
+import { formatEventDateLabel } from "@/lib/db/events";
 import type { ImmersionKioskRegistration } from "@/lib/db/types";
 
 const INSTAGRAM_URL = "https://www.instagram.com/landofimmersion/";
+const EVENT_TIMEZONE = process.env.EVENT_TIMEZONE || "America/Los_Angeles";
 
 export type EmailResult = {
   sent: boolean;
@@ -18,6 +20,64 @@ function escapeHtml(value: string) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function formatClock(iso: string | null | undefined) {
+  if (!iso) return null;
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: EVENT_TIMEZONE,
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(iso));
+}
+
+function formatEventDetails(registration: ImmersionKioskRegistration) {
+  const eventName = registration.event_name;
+  const location = registration.location;
+  const eventDate = registration.event_date
+    ? formatEventDateLabel(registration.event_date)
+    : null;
+  const checkedInAt = formatClock(registration.created_at);
+  const playedAt = formatClock(registration.played_at);
+
+  const lines = [
+    `Event: ${eventName}`,
+    location ? `Location: ${location}` : null,
+    eventDate ? `Date: ${eventDate}` : null,
+    checkedInAt ? `Checked in: ${checkedInAt}` : null,
+    playedAt ? `Played at: ${playedAt}` : null,
+  ].filter(Boolean) as string[];
+
+  const htmlRows = [
+    ["Event", eventName],
+    location ? ["Location", location] : null,
+    eventDate ? ["Date", eventDate] : null,
+    checkedInAt ? ["Checked in", checkedInAt] : null,
+    playedAt ? ["Played at", playedAt] : null,
+  ]
+    .filter(Boolean)
+    .map((row) => {
+      const [label, value] = row as [string, string];
+      return `<tr>
+        <td style="padding:6px 0;font-size:13px;color:#8b8b9a;width:110px;vertical-align:top;">${escapeHtml(label)}</td>
+        <td style="padding:6px 0;font-size:14px;color:#ffffff;">${escapeHtml(value)}</td>
+      </tr>`;
+    })
+    .join("");
+
+  return {
+    eventName,
+    location,
+    eventDate,
+    checkedInAt,
+    playedAt,
+    textBlock: lines.join("\n"),
+    htmlBlock: `
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 8px;">
+        ${htmlRows}
+      </table>
+    `,
+  };
 }
 
 function getSmtpConfig(): SMTPTransport.Options | null {
@@ -219,18 +279,19 @@ function queueBadge(queueNumber: number) {
 
 export async function sendAcknowledgmentEmail(registration: ImmersionKioskRegistration) {
   const name = escapeHtml(registration.name);
-  const eventName = escapeHtml(registration.event_name);
   const experience = escapeHtml(registration.experience);
+  const details = formatEventDetails(registration);
 
   return sendMail({
     to: registration.email,
     subject: `Welcome to Immersion: Queue #${registration.queue_number}`,
     text: `Hi ${registration.name},
 
-Welcome to Immersion. You're officially checked in for ${registration.event_name}.
+Welcome to Immersion. You're officially checked in for ${details.eventName}.
 
 Your queue number is #${registration.queue_number}
 Experience: ${registration.experience}
+${details.textBlock}
 
 Hold onto this email. It's your digital ticket for the night. We'll send another message as soon as your station is ready.
 
@@ -243,10 +304,11 @@ ${INSTAGRAM_URL}`,
       title: "Welcome in",
       bodyHtml: `
         <p style="margin:0 0 14px;">Hi ${name},</p>
-        <p style="margin:0 0 14px;">You're officially checked in for <strong style="color:#ffffff;">${eventName}</strong>. We've saved your place and your digital ticket is ready.</p>
+        <p style="margin:0 0 14px;">You're officially checked in for <strong style="color:#ffffff;">${escapeHtml(details.eventName)}</strong>. We've saved your place and your digital ticket is ready.</p>
         ${queueBadge(registration.queue_number)}
-        <p style="margin:0 0 14px;">Tonight's experience: <strong style="color:#ffffff;">${experience}</strong></p>
-        <p style="margin:0;">Sit tight. We'll email you the moment your station is ready for you.</p>
+        <p style="margin:0 0 8px;">Tonight's experience: <strong style="color:#ffffff;">${experience}</strong></p>
+        ${details.htmlBlock}
+        <p style="margin:14px 0 0;">Sit tight. We'll email you the moment your station is ready for you.</p>
       `,
     }),
   });
@@ -255,6 +317,7 @@ ${INSTAGRAM_URL}`,
 export async function sendReadyEmail(registration: ImmersionKioskRegistration) {
   const name = escapeHtml(registration.name);
   const experience = escapeHtml(registration.experience);
+  const details = formatEventDetails(registration);
 
   return sendMail({
     to: registration.email,
@@ -264,6 +327,7 @@ export async function sendReadyEmail(registration: ImmersionKioskRegistration) {
 You're up. Your ${registration.experience} station is ready.
 
 Queue #${registration.queue_number}
+${details.textBlock}
 
 Please head back to Immersion check-in and our team will get you started.
 
@@ -278,7 +342,8 @@ ${INSTAGRAM_URL}`,
         <p style="margin:0 0 14px;">Hi ${name},</p>
         <p style="margin:0 0 14px;">You're up. Your <strong style="color:#ffffff;">${experience}</strong> station is ready and waiting for you.</p>
         ${queueBadge(registration.queue_number)}
-        <p style="margin:0;">Please return to Immersion check-in. Our team will take it from there.</p>
+        ${details.htmlBlock}
+        <p style="margin:14px 0 0;">Please return to Immersion check-in. Our team will take it from there.</p>
       `,
     }),
   });
@@ -287,6 +352,7 @@ ${INSTAGRAM_URL}`,
 export async function sendThankYouEmail(registration: ImmersionKioskRegistration) {
   const name = escapeHtml(registration.name);
   const experience = escapeHtml(registration.experience);
+  const details = formatEventDetails(registration);
 
   return sendMail({
     to: registration.email,
@@ -294,6 +360,8 @@ export async function sendThankYouEmail(registration: ImmersionKioskRegistration
     text: `Hi ${registration.name},
 
 Thank you for hanging with us. We hope you loved your ${registration.experience} experience.
+
+${details.textBlock}
 
 If you want more Immersion moments, follow us on Instagram:
 ${INSTAGRAM_URL}
@@ -309,7 +377,8 @@ Immersion`,
       bodyHtml: `
         <p style="margin:0 0 14px;">Hi ${name},</p>
         <p style="margin:0 0 14px;">Thank you for spending time with us tonight. We hope you enjoyed every second of your <strong style="color:#ffffff;">${experience}</strong> experience.</p>
-        <p style="margin:0 0 14px;">Follow us on Instagram to stay in the loop, and keep an eye out for more Immersion events and experiences coming soon.</p>
+        ${details.htmlBlock}
+        <p style="margin:14px 0 14px;">Follow us on Instagram to stay in the loop, and keep an eye out for more Immersion events and experiences coming soon.</p>
       `,
       cta: {
         label: "Follow us on Instagram",

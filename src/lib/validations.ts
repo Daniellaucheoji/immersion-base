@@ -36,4 +36,16 @@ export const teamMemberSchema = z.object({
   role: z.string().trim().min(2, "Role is required").max(80),
 });
 
+export const eventSchema = z.object({
+  name: z.string().trim().min(2, "Event name is required").max(120),
+  location: z.string().trim().min(2, "Location is required").max(160),
+  event_date: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Use a valid date"),
+  start_time: z.string().trim().optional().nullable(),
+  end_time: z.string().trim().optional().nullable(),
+  active: z.boolean().optional(),
+});
+
 export type RegistrationInput = z.infer<typeof registrationSchema>;

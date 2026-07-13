@@ -2,11 +2,13 @@
 
 import Image from "next/image";
 import { useEffect, useState, type FormEvent } from "react";
-import type { ExperienceType, ImmersionKioskRegistration } from "@/lib/db/types";
+import type {
+  ExperienceType,
+  ImmersionEvent,
+  ImmersionKioskRegistration,
+} from "@/lib/db/types";
 
 type Step = "landing" | "form" | "confirm";
-
-const EVENT_NAME = process.env.NEXT_PUBLIC_EVENT_NAME || "Immersion Event";
 
 const DISCLAIMER_POINTS = [
   {
@@ -31,6 +33,17 @@ const DISCLAIMER_POINTS = [
   },
 ];
 
+function formatEventDate(eventDate: string) {
+  const [year, month, day] = eventDate.split("-").map(Number);
+  if (!year || !month || !day) return eventDate;
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, day)));
+}
+
 export default function PlayPage() {
   const [step, setStep] = useState<Step>("landing");
   const [name, setName] = useState("");
@@ -41,6 +54,7 @@ export default function PlayPage() {
   const [teamMembers, setTeamMembers] = useState<Array<{ id: string; name: string; role: string }>>(
     []
   );
+  const [currentEvent, setCurrentEvent] = useState<ImmersionEvent | null>(null);
   const [disclaimerOpen, setDisclaimerOpen] = useState(false);
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -58,6 +72,13 @@ export default function PlayPage() {
       .then((res) => res.json())
       .then((data) => setTeamMembers(data.members || []))
       .catch(() => setTeamMembers([]));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/events?current=1")
+      .then((res) => res.json())
+      .then((data) => setCurrentEvent(data.event || null))
+      .catch(() => setCurrentEvent(null));
   }, []);
 
   useEffect(() => {
@@ -104,7 +125,6 @@ export default function PlayPage() {
           email,
           phone,
           experience,
-          event_name: EVENT_NAME,
           disclaimer_accepted: true,
           checked_in_by_team_member_id: staffId || null,
         }),
@@ -139,6 +159,19 @@ export default function PlayPage() {
     setStep("landing");
   }
 
+  const eventLabel =
+    currentEvent?.name ||
+    process.env.NEXT_PUBLIC_EVENT_NAME ||
+    "Immersion Event";
+  const eventMeta = currentEvent
+    ? [
+        currentEvent.location,
+        currentEvent.event_date ? formatEventDate(currentEvent.event_date) : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : null;
+
   return (
     <main className="relative mx-auto flex min-h-dvh w-full max-w-lg flex-col items-center justify-center px-6 py-12">
       <div className="play-atmosphere" aria-hidden />
@@ -170,7 +203,8 @@ export default function PlayPage() {
           >
             Check In
           </button>
-          <p className="mt-6 text-xs text-neutral-600">{EVENT_NAME}</p>
+          <p className="mt-6 text-sm text-neutral-300">{eventLabel}</p>
+          {eventMeta && <p className="mt-1 text-xs text-neutral-600">{eventMeta}</p>}
         </section>
       )}
 
@@ -192,6 +226,8 @@ export default function PlayPage() {
             <p className="mt-2 text-sm text-neutral-400">
               A few details and we&apos;ll hold your place in line.
             </p>
+            <p className="mt-3 text-sm text-violet-200/90">{eventLabel}</p>
+            {eventMeta && <p className="mt-1 text-xs text-neutral-500">{eventMeta}</p>}
           </div>
 
           <form onSubmit={openDisclaimer} className="space-y-5">
@@ -323,7 +359,7 @@ export default function PlayPage() {
             You&apos;re checked in
           </p>
           <p className="mt-3 text-sm text-neutral-400">
-            Hi {registration.name} — your place is confirmed.
+            Hi {registration.name}, your place is confirmed.
           </p>
 
           <div className="mt-10 w-full rounded-3xl border border-white/10 bg-white/5 px-6 py-10 backdrop-blur-sm">
@@ -331,9 +367,16 @@ export default function PlayPage() {
             <p className="mt-3 font-light text-6xl tracking-tight text-white sm:text-7xl">
               #{registration.queue_number}
             </p>
-            <p className="mt-6 text-sm text-neutral-400">
-              {registration.experience} · {registration.event_name}
+            <p className="mt-6 text-sm text-neutral-300">{registration.event_name}</p>
+            <p className="mt-2 text-sm text-neutral-400">
+              {registration.experience}
+              {registration.location ? ` · ${registration.location}` : ""}
             </p>
+            {registration.event_date && (
+              <p className="mt-1 text-xs text-neutral-500">
+                {formatEventDate(registration.event_date)}
+              </p>
+            )}
           </div>
 
           <p className="mt-8 max-w-sm text-sm leading-relaxed text-neutral-400">
@@ -346,7 +389,7 @@ export default function PlayPage() {
             onClick={resetKiosk}
             className="btn-primary mt-10 w-full max-w-xs rounded-full bg-violet-600 px-8 py-4 text-sm font-medium"
           >
-            Done — Next Guest
+            Done · Next Guest
           </button>
         </section>
       )}

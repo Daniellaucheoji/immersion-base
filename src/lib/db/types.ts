@@ -17,6 +17,17 @@ export type TeamMember = {
   created_at: string;
 };
 
+export type ImmersionEvent = {
+  id: string;
+  name: string;
+  location: string;
+  event_date: string; // YYYY-MM-DD
+  start_time: string | null; // HH:MM
+  end_time: string | null;
+  active: boolean;
+  created_at: string;
+};
+
 export type ImmersionKioskRegistration = {
   id: string;
   queue_number: number;
@@ -25,7 +36,10 @@ export type ImmersionKioskRegistration = {
   phone: string;
   experience: ExperienceType;
   status: RegistrationStatus;
+  event_id: string | null;
   event_name: string;
+  location: string | null;
+  event_date: string | null;
   play_count: number;
   checked_in_by_team_member_id: string | null;
   checked_in_by_name: string | null;
@@ -43,7 +57,10 @@ export type CreateRegistrationInput = {
   email: string;
   phone: string;
   experience: ExperienceType;
+  event_id?: string | null;
   event_name: string;
+  location?: string | null;
+  event_date?: string | null;
   disclaimer_accepted: boolean;
   checked_in_by_team_member_id?: string | null;
 };
@@ -59,4 +76,13 @@ export type CreateTeamMemberInput = {
   name: string;
   email: string;
   role: string;
+};
+
+export type CreateEventInput = {
+  name: string;
+  location: string;
+  event_date: string;
+  start_time?: string | null;
+  end_time?: string | null;
+  active?: boolean;
 };

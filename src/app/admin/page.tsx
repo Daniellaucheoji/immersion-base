@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import type {
+  ImmersionEvent,
   ImmersionKioskRegistration,
   RegistrationStatus,
   TeamMember,
@@ -62,6 +63,16 @@ export default function AdminPage() {
   const [teamMessage, setTeamMessage] = useState<string | null>(null);
   const [teamError, setTeamError] = useState<string | null>(null);
   const [testingEmail, setTestingEmail] = useState(false);
+  const [events, setEvents] = useState<ImmersionEvent[]>([]);
+  const [currentEvent, setCurrentEvent] = useState<ImmersionEvent | null>(null);
+  const [eventName, setEventName] = useState("");
+  const [eventLocation, setEventLocation] = useState("");
+  const [eventDate, setEventDate] = useState("");
+  const [eventStart, setEventStart] = useState("");
+  const [eventEnd, setEventEnd] = useState("");
+  const [addingEvent, setAddingEvent] = useState(false);
+  const [eventMessage, setEventMessage] = useState<string | null>(null);
+  const [eventError, setEventError] = useState<string | null>(null);
 
   const checkAuth = useCallback(async () => {
     const res = await fetch("/api/admin/auth");
@@ -100,6 +111,18 @@ export default function AdminPage() {
     }
   }, []);
 
+  const loadEvents = useCallback(async () => {
+    try {
+      const res = await fetch("/api/events");
+      if (!res.ok) return;
+      const data = await res.json();
+      setEvents(data.events || []);
+      setCurrentEvent(data.currentEvent || null);
+    } catch {
+      // ignore
+    }
+  }, []);
+
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
@@ -108,10 +131,11 @@ export default function AdminPage() {
     if (authenticated) {
       loadRegistrations();
       loadTeam();
+      loadEvents();
       const interval = setInterval(loadRegistrations, 15000);
       return () => clearInterval(interval);
     }
-  }, [authenticated, loadRegistrations, loadTeam]);
+  }, [authenticated, loadRegistrations, loadTeam, loadEvents]);
 
   const eventNames = useMemo(() => {
     const names = new Set(registrations.map((r) => r.event_name));
@@ -188,6 +212,75 @@ export default function AdminPage() {
     setOtpCode("");
     setRegistrations([]);
     setTeamMembers([]);
+    setEvents([]);
+    setCurrentEvent(null);
+  }
+
+  function formatEventDateLabel(value: string | null | undefined) {
+    if (!value) return "—";
+    const [year, month, day] = value.split("-").map(Number);
+    if (!year || !month || !day) return value;
+    return new Intl.DateTimeFormat("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(new Date(Date.UTC(year, month - 1, day)));
+  }
+
+  function formatPlayedAt(iso: string | null) {
+    if (!iso) return "—";
+    return new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  }
+
+  async function handleAddEvent(event: FormEvent) {
+    event.preventDefault();
+    setAddingEvent(true);
+    setEventError(null);
+    setEventMessage(null);
+    try {
+      const res = await fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: eventName,
+          location: eventLocation,
+          event_date: eventDate,
+          start_time: eventStart || null,
+          end_time: eventEnd || null,
+          active: true,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not create event");
+      setEventName("");
+      setEventLocation("");
+      setEventDate("");
+      setEventStart("");
+      setEventEnd("");
+      setEventMessage(`${data.event.name} added for ${formatEventDateLabel(data.event.event_date)}.`);
+      await loadEvents();
+    } catch (err) {
+      setEventError(err instanceof Error ? err.message : "Could not create event");
+    } finally {
+      setAddingEvent(false);
+    }
+  }
+
+  async function toggleEventActive(item: ImmersionEvent) {
+    try {
+      const res = await fetch("/api/events", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: item.id, active: !item.active }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Update failed");
+      await loadEvents();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Update failed");
+    }
   }
 
   async function updateStatus(id: string, status: RegistrationStatus) {
@@ -445,6 +538,7 @@ export default function AdminPage() {
             onClick={() => {
               loadRegistrations();
               loadTeam();
+              loadEvents();
             }}
             className="rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm hover:bg-neutral-50"
           >
@@ -473,6 +567,140 @@ export default function AdminPage() {
             <p className="mt-1 text-2xl font-light">{stat.value}</p>
           </div>
         ))}
+      </section>
+
+      <section className="mb-8 rounded-2xl border border-neutral-200 bg-white p-5">
+        <div className="mb-4">
+          <h2 className="text-base font-semibold tracking-wide">Events</h2>
+          <p className="text-sm text-neutral-500">
+            Add event name, location, and date. The kiosk and guest emails use the current event
+            {currentEvent ? (
+              <>
+                {" "}
+                (now: <span className="text-neutral-700">{currentEvent.name}</span> at{" "}
+                <span className="text-neutral-700">{currentEvent.location}</span>)
+              </>
+            ) : null}
+            .
+          </p>
+        </div>
+
+        <form
+          onSubmit={handleAddEvent}
+          className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1.3fr_1.2fr_1fr_0.7fr_0.7fr_auto]"
+        >
+          <input
+            required
+            value={eventName}
+            onChange={(e) => setEventName(e.target.value)}
+            placeholder="Event name"
+            className="rounded-xl border border-neutral-200 px-3 py-2.5 text-sm outline-none focus:border-violet-500"
+          />
+          <input
+            required
+            value={eventLocation}
+            onChange={(e) => setEventLocation(e.target.value)}
+            placeholder="Location"
+            className="rounded-xl border border-neutral-200 px-3 py-2.5 text-sm outline-none focus:border-violet-500"
+          />
+          <input
+            required
+            type="date"
+            value={eventDate}
+            onChange={(e) => setEventDate(e.target.value)}
+            className="rounded-xl border border-neutral-200 px-3 py-2.5 text-sm outline-none focus:border-violet-500"
+          />
+          <input
+            type="time"
+            value={eventStart}
+            onChange={(e) => setEventStart(e.target.value)}
+            className="rounded-xl border border-neutral-200 px-3 py-2.5 text-sm outline-none focus:border-violet-500"
+            title="Start time (optional)"
+          />
+          <input
+            type="time"
+            value={eventEnd}
+            onChange={(e) => setEventEnd(e.target.value)}
+            className="rounded-xl border border-neutral-200 px-3 py-2.5 text-sm outline-none focus:border-violet-500"
+            title="End time (optional)"
+          />
+          <button
+            type="submit"
+            disabled={addingEvent}
+            className="rounded-full bg-violet-600 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60"
+          >
+            {addingEvent ? "Adding…" : "Add event"}
+          </button>
+        </form>
+
+        {eventError && <p className="mb-3 text-sm text-red-600">{eventError}</p>}
+        {eventMessage && <p className="mb-3 text-sm text-violet-700">{eventMessage}</p>}
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead className="border-b border-neutral-100 text-xs tracking-wide text-neutral-500 uppercase">
+              <tr>
+                <th className="px-2 py-2 font-medium">Event</th>
+                <th className="px-2 py-2 font-medium">Location</th>
+                <th className="px-2 py-2 font-medium">Date</th>
+                <th className="px-2 py-2 font-medium">Hours</th>
+                <th className="px-2 py-2 font-medium">Status</th>
+                <th className="px-2 py-2 font-medium"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {events.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-2 py-6 text-neutral-500">
+                    No events yet. Add one so check-ins use the real event name.
+                  </td>
+                </tr>
+              ) : (
+                events.map((item) => (
+                  <tr key={item.id} className="border-b border-neutral-50 last:border-0">
+                    <td className="px-2 py-3 font-medium">
+                      {item.name}
+                      {currentEvent?.id === item.id ? (
+                        <span className="ml-2 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-medium tracking-wide text-violet-700 uppercase">
+                          Current
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="px-2 py-3 text-neutral-600">{item.location}</td>
+                    <td className="px-2 py-3 whitespace-nowrap">
+                      {formatEventDateLabel(item.event_date)}
+                    </td>
+                    <td className="px-2 py-3 whitespace-nowrap text-neutral-600">
+                      {item.start_time || item.end_time
+                        ? `${item.start_time || "—"} – ${item.end_time || "—"}`
+                        : "—"}
+                    </td>
+                    <td className="px-2 py-3">
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+                          item.active
+                            ? "bg-violet-50 text-violet-700"
+                            : "bg-neutral-100 text-neutral-500"
+                        }`}
+                      >
+                        {item.active ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td className="px-2 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => toggleEventActive(item)}
+                        className="text-xs text-neutral-500 hover:text-neutral-900"
+                      >
+                        {item.active ? "Deactivate" : "Activate"}
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section className="mb-8 rounded-2xl border border-neutral-200 bg-white p-5">
@@ -623,9 +851,11 @@ export default function AdminPage() {
               <th className="px-4 py-3 font-medium">Guest</th>
               <th className="px-4 py-3 font-medium">Played</th>
               <th className="px-4 py-3 font-medium">Times</th>
-              <th className="px-4 py-3 font-medium">Time</th>
-              <th className="px-4 py-3 font-medium">Date</th>
+              <th className="px-4 py-3 font-medium">Check-in</th>
+              <th className="px-4 py-3 font-medium">Played at</th>
               <th className="px-4 py-3 font-medium">Event</th>
+              <th className="px-4 py-3 font-medium">Location</th>
+              <th className="px-4 py-3 font-medium">Event date</th>
               <th className="px-4 py-3 font-medium">Checked in by</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">Emails</th>
@@ -634,13 +864,13 @@ export default function AdminPage() {
           <tbody>
             {loading && filtered.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-4 py-10 text-center text-neutral-500">
+                <td colSpan={12} className="px-4 py-10 text-center text-neutral-500">
                   Loading registrations…
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-4 py-10 text-center text-neutral-500">
+                <td colSpan={12} className="px-4 py-10 text-center text-neutral-500">
                   No registrations yet.
                 </td>
               </tr>
@@ -664,15 +894,15 @@ export default function AdminPage() {
                     <td className="px-4 py-3 whitespace-nowrap">
                       {created.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {created.toLocaleDateString([], {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">{formatPlayedAt(row.played_at)}</td>
                     <td className="px-4 py-3 max-w-[10rem] truncate" title={row.event_name}>
                       {row.event_name}
+                    </td>
+                    <td className="px-4 py-3 max-w-[9rem] truncate" title={row.location || undefined}>
+                      {row.location || "—"}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {formatEventDateLabel(row.event_date)}
                     </td>
                     <td className="px-4 py-3 text-neutral-600">
                       {row.checked_in_by_name || "—"}

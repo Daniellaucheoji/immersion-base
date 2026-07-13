@@ -128,18 +128,48 @@ alter table public.immersion_kiosk_registrations
 create index if not exists immersion_kiosk_registrations_checked_in_by_idx
   on public.immersion_kiosk_registrations (checked_in_by_team_member_id);
 
--- If you already created the earlier schema, run this migration:
--- alter table public.immersion_kiosk_registrations
---   add column if not exists phone text,
---   add column if not exists disclaimer_accepted_at timestamptz;
--- update public.immersion_kiosk_registrations
---   set phone = coalesce(phone, ''),
---       disclaimer_accepted_at = coalesce(disclaimer_accepted_at, created_at)
---   where phone is null or disclaimer_accepted_at is null;
--- alter table public.immersion_kiosk_registrations
---   alter column phone set not null,
---   alter column disclaimer_accepted_at set not null;
--- alter table public.immersion_kiosk_registrations
---   drop column if exists social_handle;
--- alter table public.immersion_kiosk_registrations
---   add column if not exists thank_you_email_sent_at timestamptz;
+-- Events (name, location, date, optional hours) for kiosk + admin + emails
+create table if not exists public.immersion_events (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  location text not null,
+  event_date date not null,
+  start_time time,
+  end_time time,
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists immersion_events_event_date_idx
+  on public.immersion_events (event_date desc);
+
+create index if not exists immersion_events_active_idx
+  on public.immersion_events (active);
+
+alter table public.immersion_kiosk_registrations
+  add column if not exists event_id uuid
+    references public.immersion_events(id);
+
+alter table public.immersion_kiosk_registrations
+  add column if not exists location text;
+
+alter table public.immersion_kiosk_registrations
+  add column if not exists event_date date;
+
+create index if not exists immersion_kiosk_registrations_event_id_idx
+  on public.immersion_kiosk_registrations (event_id);
+
+-- Seed: On The Mood Board @ Gallery Defi (Jul 18)
+insert into public.immersion_events (name, location, event_date, start_time, end_time, active)
+select
+  'On The Mood Board',
+  'Gallery Defi',
+  '2026-07-18'::date,
+  null,
+  null,
+  true
+where not exists (
+  select 1 from public.immersion_events
+  where name = 'On The Mood Board'
+    and event_date = '2026-07-18'::date
+);

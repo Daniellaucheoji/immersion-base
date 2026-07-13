@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { getCurrentEvent } from "@/lib/db/events";
 import {
   createRegistration,
   getRegistrationById,
@@ -54,7 +55,9 @@ export async function POST(request: Request) {
       );
     }
 
+    const currentEvent = await getCurrentEvent();
     const eventName =
+      currentEvent?.name ||
       (typeof body.event_name === "string" && body.event_name.trim()) ||
       process.env.NEXT_PUBLIC_EVENT_NAME ||
       "Immersion Event";
@@ -64,7 +67,10 @@ export async function POST(request: Request) {
       email: parsed.data.email,
       phone: parsed.data.phone,
       experience: parsed.data.experience,
+      event_id: currentEvent?.id || null,
       event_name: eventName,
+      location: currentEvent?.location || null,
+      event_date: currentEvent?.event_date || null,
       disclaimer_accepted: parsed.data.disclaimer_accepted,
       checked_in_by_team_member_id: parsed.data.checked_in_by_team_member_id || null,
     });
